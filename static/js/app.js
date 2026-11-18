@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initEngineBadge() {
         if (state.apiKey) {
-            currentEngineLabel.textContent = "Gemini 2.5 Flash";
+            currentEngineLabel.textContent = "Gemini Cloud AI";
             headerStatusText.textContent = "Connected to Gemini Cloud AI";
         } else {
             currentEngineLabel.textContent = "PageSage Literary Core";

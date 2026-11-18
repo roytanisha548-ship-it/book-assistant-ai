@@ -84,9 +84,13 @@ class LiteraryAgent:
         spoiler_shield: bool,
         user_preferences: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
-        """Call Gemini REST API (gemini-2.5-flash or gemini-1.5-flash)."""
-        model = "gemini-2.5-flash"
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        """Call Gemini REST API across available models with automatic fallback."""
+        candidate_models = [
+            "gemini-3.8-flash",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash"
+        ]
         
         # Build contents from history
         contents = []
@@ -126,64 +130,61 @@ class LiteraryAgent:
         }
 
         headers = {"Content-Type": "application/json"}
-        resp = requests.post(url, headers=headers, json=payload, timeout=12)
-        
-        if resp.status_code == 200:
-            data = resp.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                raw_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                
-                # Extract embedded book JSON if present
-                book_cards = []
-                match = re.search(r'<!--\s*BOOKS:\s*(\[.*?\])\s*-->', raw_text, re.DOTALL)
-                if match:
-                    try:
-                        books_meta = json.loads(match.group(1))
-                        for b in books_meta:
-                            title = b.get("title", "")
-                            # Search in local curated or open library for cover and info
-                            found = search_local_books(title)
-                            if found:
-                                book_cards.append(found[0])
-                            else:
-                                book_cards.append({
-                                    "id": re.sub(r'\W+', '-', title.lower()).strip('-'),
-                                    "title": title,
-                                    "author": b.get("author", "Various"),
-                                    "year": b.get("year", "N/A"),
-                                    "genre": "Recommended Read",
-                                    "cover_url": None,
-                                    "rating": 4.5,
-                                    "description": f"Featured literary recommendation by {b.get('author', 'Author')}."
-                                })
-                    except Exception:
-                        pass
-                
-                # Clean up the hidden comment from visible text
-                clean_text = re.sub(r'<!--\s*BOOKS:.*?-->', '', raw_text, flags=re.DOTALL).strip()
-                
-                return {
-                    "text": clean_text,
-                    "book_cards": book_cards,
-                    "engine": "gemini-cloud",
-                    "model": model
-                }
-        elif resp.status_code == 404 or resp.status_code == 400:
-            # Try fallback to gemini-1.5-flash
-            fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-            resp2 = requests.post(fallback_url, headers=headers, json=payload, timeout=10)
-            if resp2.status_code == 200:
-                data2 = resp2.json()
-                raw_text = data2.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                return {
-                    "text": re.sub(r'<!--\s*BOOKS:.*?-->', '', raw_text, flags=re.DOTALL).strip(),
-                    "book_cards": [],
-                    "engine": "gemini-cloud",
-                    "model": "gemini-1.5-flash"
-                }
+        last_error = None
 
-        raise RuntimeError(f"Gemini API returned status {resp.status_code}: {resp.text}")
+        for model in candidate_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            try:
+                resp = requests.post(url, headers=headers, json=payload, timeout=12)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        raw_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        
+                        # Extract embedded book JSON if present
+                        book_cards = []
+                        match = re.search(r'<!--\s*BOOKS:\s*(\[.*?\])\s*-->', raw_text, re.DOTALL)
+                        if match:
+                            try:
+                                books_meta = json.loads(match.group(1))
+                                for b in books_meta:
+                                    title = b.get("title", "")
+                                    found = search_local_books(title)
+                                    if found:
+                                        book_cards.append(found[0])
+                                    else:
+                                        book_cards.append({
+                                            "id": re.sub(r'\W+', '-', title.lower()).strip('-'),
+                                            "title": title,
+                                            "author": b.get("author", "Various"),
+                                            "year": b.get("year", "N/A"),
+                                            "genre": "Recommended Read",
+                                            "cover_url": None,
+                                            "rating": 4.5,
+                                            "description": f"Featured literary recommendation by {b.get('author', 'Author')}."
+                                        })
+                            except Exception:
+                                pass
+                        
+                        clean_text = re.sub(r'<!--\s*BOOKS:.*?-->', '', raw_text, flags=re.DOTALL).strip()
+                        return {
+                            "text": clean_text,
+                            "book_cards": book_cards,
+                            "engine": "gemini-cloud",
+                            "model": model
+                        }
+                elif resp.status_code in [404, 400]:
+                    # Model not available for this key/tier, continue to next candidate model
+                    last_error = f"Gemini API returned status {resp.status_code}: {resp.text}"
+                    continue
+                else:
+                    last_error = f"Gemini API returned status {resp.status_code}: {resp.text}"
+            except Exception as e:
+                last_error = str(e)
+                continue
+
+        raise RuntimeError(last_error or "Failed to connect to any Gemini model candidate.")
 
     def _offline_reasoning(
         self,
