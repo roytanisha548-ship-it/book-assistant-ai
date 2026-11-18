@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PageSage | AI Literary Companion & Book Assistant</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Marked for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i data-lucide="book-open-check"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>PageSage</h2>
+                        <span class="brand-subtitle">AI Book Assistant</span>
+                    </div>
+                </div>
+                <button class="icon-btn mobile-only" id="closeSidebarBtn" title="Close Sidebar">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <!-- AI Engine Indicator / Settings Trigger -->
+            <div class="engine-badge-card" id="engineStatusCard">
+                <div class="engine-status-indicator">
+                    <span class="status-dot active"></span>
+                    <span id="currentEngineLabel">PageSage Literary Core</span>
+                </div>
+                <button class="settings-mini-btn" id="openSettingsBtn" title="Configure AI & Preferences">
+                    <i data-lucide="settings-2"></i>
+                </button>
+            </div>
+
+            <!-- Quick Action Prompts -->
+            <div class="sidebar-section">
+                <h3 class="section-title">
+                    <i data-lucide="sparkles"></i> Guided Inquiries
+                </h3>
+                <div class="quick-prompts-list">
+                    <button class="prompt-chip" data-prompt="Recommend 3 engrossing sci-fi books with high-stakes problem-solving and an unlikely friendship.">
+                        <i data-lucide="compass"></i> Recommend by Mood
+                    </button>
+                    <button class="prompt-chip" data-prompt="What should I read if I loved 'Project Hail Mary' and 'Dune'?">
+                        <i data-lucide="shuffle"></i> Find Read-Alikes
+                    </button>
+                    <button class="prompt-chip" data-prompt="Give me a spoiler-free premise and thematic breakdown of 'The Silent Patient'.">
+                        <i data-lucide="shield-check"></i> Spoiler-Free Summary
+                    </button>
+                    <button class="prompt-chip" data-prompt="Generate a lively book club discussion guide for 'The Great Gatsby' with thought-provoking questions.">
+                        <i data-lucide="users"></i> Book Club Guide
+                    </button>
+                    <button class="prompt-chip" data-prompt="What is the recommended reading order for Brandon Sanderson's Cosmere universe?">
+                        <i data-lucide="list-ordered"></i> Series Reading Order
+                    </button>
+                    <button class="prompt-chip" data-prompt="Break down the character motivations of Winston Smith and O'Brien in '1984'.">
+                        <i data-lucide="user-check"></i> Character Analysis
+                    </button>
+                </div>
+            </div>
+
+            <!-- My Bookshelf Tracker -->
+            <div class="sidebar-section bookshelf-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i data-lucide="library"></i> My Bookshelf
+                    </h3>
+                    <button class="icon-btn text-btn" id="exportBookshelfBtn" title="Export Bookshelf">
+                        <i data-lucide="download"></i>
+                    </button>
+                </div>
+
+                <!-- Shelf Tabs -->
+                <div class="shelf-tabs">
+                    <button class="shelf-tab active" data-tab="want">Want (<span id="wantCount">0</span>)</button>
+                    <button class="shelf-tab" data-tab="reading">Reading (<span id="readingCount">0</span>)</button>
+                    <button class="shelf-tab" data-tab="finished">Read (<span id="finishedCount">0</span>)</button>
+                </div>
+
+                <div class="bookshelf-list" id="bookshelfList">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Footer / Version -->
+            <div class="sidebar-footer">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <i data-lucide="plus-circle"></i> New Conversation
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Top Navigation Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="icon-btn" id="toggleSidebarBtn" title="Toggle Sidebar">
+                        <i data-lucide="panel-left"></i>
+                    </button>
+                    <div class="active-chat-info">
+                        <span class="chat-title">Literary Dialogue</span>
+                        <span class="chat-status" id="headerStatusText">Ready for recommendations & analysis</span>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Spoiler Shield Toggle -->
+                    <div class="toggle-container" title="When enabled, major plot twists and endings are hidden behind clickable spoiler warnings">
+                        <label class="switch">
+                            <input type="checkbox" id="spoilerShieldToggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="toggle-label">
+                            <i data-lucide="shield" class="icon-sm"></i>
+                            <span id="spoilerShieldText">Spoiler Shield ON</span>
+                        </span>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button class="icon-btn" id="themeToggleBtn" title="Toggle Dark/Light Mode">
+                        <i data-lucide="moon" id="themeIcon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat History Area -->
+            <div class="chat-container" id="chatContainer">
+                <!-- Welcome Banner (visible on empty chat) -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-badge">
+                        <i data-lucide="feather"></i> Your Intelligent Bibliophile
+                    </div>
+                    <h1 class="welcome-title">What story shall we explore today?</h1>
+                    <p class="welcome-desc">
+                        Ask for tailored book recommendations by trope or mood, explore literary themes, generate book club debate questions, or get spoiler-free overviews.
+                    </p>
+
+                    <div class="starter-grid">
+                        <div class="starter-card" data-prompt="Recommend an atmospheric mystery set in a remote village or island, perfect for a stormy evening.">
+                            <div class="starter-icon"><i data-lucide="cloud-rain"></i></div>
+                            <h4>Atmospheric Mystery</h4>
+                            <p>Remote setting, slow-burn tension, cozy suspense</p>
+                        </div>
+                        <div class="starter-card" data-prompt="I want a thought-provoking sci-fi book that deals with time, consciousness, or first contact.">
+                            <div class="starter-icon"><i data-lucide="orbit"></i></div>
+                            <h4>Mind-Bending Sci-Fi</h4>
+                            <p>First contact, philosophical depth, ingenuity</p>
+                        </div>
+                        <div class="starter-card" data-prompt="What are the main themes and literary devices in 'Pride and Prejudice' by Jane Austen?">
+                            <div class="starter-icon"><i data-lucide="book-heart"></i></div>
+                            <h4>Literary Deep-Dive</h4>
+                            <p>Character development, satire, social commentary</p>
+                        </div>
+                        <div class="starter-card" data-prompt="Recommend the best non-fiction books on building mental clarity, habits, and deep focus.">
+                            <div class="starter-icon"><i data-lucide="brain"></i></div>
+                            <h4>Growth & Psychology</h4>
+                            <p>Habits, behavioral psychology, deep work</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages stream here -->
+                <div class="messages-list" id="messagesList"></div>
+
+                <!-- Typing indicator -->
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <div class="typing-bubble">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <span class="typing-text">PageSage is searching the literary archives...</span>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="input-container">
+                <form class="input-form" id="chatForm">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            rows="1" 
+                            placeholder="Ask about books, authors, tropes, reading orders, or plot summaries..." 
+                            autofocus
+                        ></textarea>
+                        
+                        <div class="input-actions">
+                            <button type="button" class="action-btn" id="inputSpoilerBtn" title="Toggle Spoiler Protection">
+                                <i data-lucide="shield" id="inputSpoilerIcon"></i>
+                            </button>
+                            <button type="submit" class="send-btn" id="sendBtn" title="Send Message (Enter)">
+                                <i data-lucide="arrow-up"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-hint">
+                        <span>Press <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for a new line</span>
+                        <span class="hint-separator">•</span>
+                        <span id="shieldActiveHint">🛡️ Spoiler Shield Active</span>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i data-lucide="settings"></i>
+                    <h3>PageSage Settings</h3>
+                </div>
+                <button class="icon-btn" id="closeSettingsModalBtn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="geminiApiKeyInput">
+                        <strong>Google Gemini API Key</strong> (Optional)
+                    </label>
+                    <p class="field-desc">
+                        Provide a Gemini API key to activate Gemini 2.5 Flash for deep reasoning. If left empty, PageSage seamlessly uses its built-in Offline Literary Intelligence Engine!
+                    </p>
+                    <div class="password-wrapper">
+                        <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy...">
+                        <button type="button" class="icon-btn" id="toggleApiKeyVisibility">
+                            <i data-lucide="eye" id="apiKeyEyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Favorite Genres & Tropes</strong> (Guides recommendations)</label>
+                    <div class="genre-chips-selector" id="genreChipsSelector">
+                        <button type="button" class="genre-pill" data-genre="Science Fiction">Sci-Fi</button>
+                        <button type="button" class="genre-pill" data-genre="Fantasy">Fantasy</button>
+                        <button type="button" class="genre-pill" data-genre="Mystery & Thriller">Mystery/Thriller</button>
+                        <button type="button" class="genre-pill" data-genre="Historical Fiction">Historical Fiction</button>
+                        <button type="button" class="genre-pill" data-genre="Romance">Romance</button>
+                        <button type="button" class="genre-pill" data-genre="Classics">Classics</button>
+                        <button type="button" class="genre-pill" data-genre="Dystopian">Dystopian</button>
+                        <button type="button" class="genre-pill" data-genre="Non-Fiction">Non-Fiction</button>
+                        <button type="button" class="genre-pill" data-genre="Horror">Horror & Gothic</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="favAuthorsInput"><strong>Favorite Authors</strong></label>
+                    <input type="text" id="favAuthorsInput" placeholder="e.g. Andy Weir, Brandon Sanderson, Jane Austen">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="resetSettingsBtn">Reset</button>
+                <button class="primary-btn" id="saveSettingsBtn">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Details Modal -->
+    <div class="modal-overlay" id="bookModal">
+        <div class="modal-card book-modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i data-lucide="book-open"></i>
+                    <h3 id="bookModalTitle">Book Details</h3>
+                </div>
+                <button class="icon-btn" id="closeBookModalBtn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body book-modal-body" id="bookModalContent">
+                <!-- Dynamically filled -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
