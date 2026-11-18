@@ -273,6 +273,60 @@ CURATED_BOOKS: List[Dict[str, Any]] = [
             "How does humor and irony function as social critique in Austen's dialogue?"
         ],
         "read_alikes": ["Emma by Jane Austen", "Jane Eyre by Charlotte Brontë", "North and South by Elizabeth Gaskell", "Sense and Sensibility by Jane Austen"]
+    },
+    {
+        "id": "the-shining",
+        "title": "The Shining",
+        "author": "Stephen King",
+        "year": 1977,
+        "genre": "Horror & Psychological",
+        "tropes": ["haunted hotel", "cabin fever / isolation", "descent into madness", "psychic abilities"],
+        "mood": ["terrifying", "tense", "claustrophobic", "dark", "chilling"],
+        "cover_url": "https://covers.openlibrary.org/b/id/8231856-M.jpg",
+        "rating": 4.6,
+        "pages": 447,
+        "description": "Jack Torrance's new job at the Overlook Hotel is the perfect chance for a fresh start. But as the winter weather sets in, the hotel's dark past and sinister supernatural forces begin to claim Jack's sanity.",
+        "spoiler_summary": "The malevolent entities of the Overlook Hotel manipulate Jack's alcoholism and temper until he turns murderous with a roque mallet. Jack's clairvoyant son Danny uses his 'shining' psychic gift to telepathically call Hallorann. Danny distracts Jack by reminding him of the Overlook's neglected, overheating boiler. Jack is consumed as the boiler explodes and destroys the hotel, allowing Wendy and Danny to escape.",
+        "themes": ["generational trauma", "alcoholism and isolation", "the supernatural vs. psychological breakdown"],
+        "characters": [
+            {"name": "Jack Torrance", "role": "Struggling writer and caretaker consumed by the hotel"},
+            {"name": "Danny Torrance", "role": "Jack's young son blessed and cursed with psychic powers (the shining)"},
+            {"name": "Wendy Torrance", "role": "Fiercely protective mother fighting for her son's survival"},
+            {"name": "Dick Hallorann", "role": "Hotel chef who shares Danny's telepathic gift"}
+        ],
+        "discussion_questions": [
+            "How much of Jack's violence stems from supernatural possession versus his inner psychological demons?",
+            "How does the Overlook Hotel function as a manifestation of historical evil?",
+            "Why is the claustrophobic winter setting so crucial to the story's terror?"
+        ],
+        "read_alikes": ["The Haunting of Hill House by Shirley Jackson", "Bird Box by Josh Malerman", "Pet Sematary by Stephen King", "Mexican Gothic by Silvia Moreno-Garcia"]
+    },
+    {
+        "id": "the-haunting-of-hill-house",
+        "title": "The Haunting of Hill House",
+        "author": "Shirley Jackson",
+        "year": 1959,
+        "genre": "Horror & Gothic",
+        "tropes": ["gothic haunted house", "unreliable perception", "psychological terror", "isolated estate"],
+        "mood": ["eerie", "haunting", "atmospheric", "unsettling"],
+        "cover_url": "https://covers.openlibrary.org/b/id/8315194-M.jpg",
+        "rating": 4.5,
+        "pages": 246,
+        "description": "Dr. Montague invites three guests to Hill House to scientifically investigate supernatural phenomena. Among them is Eleanor Vance, a lonely young woman who feels an uncanny, seductive kinship with the house.",
+        "spoiler_summary": "Hill House's malevolent architecture and bizarre occurrences prey specifically on Eleanor's fragile psyche. Convinced the house belongs to her and is calling to her, Eleanor dances wildly on the library staircase. Concerned for her sanity, Dr. Montague orders her to leave. Desperate not to be cast out from the only place where she felt belonging, Eleanor accelerates her car directly into a massive tree, dying in an apparent suicide.",
+        "themes": ["loneliness and belonging", "fragility of the mind", "domestic terror and repression"],
+        "characters": [
+            {"name": "Eleanor Vance", "role": "Fragile, isolated protagonist who forms a tragic obsession with Hill House"},
+            {"name": "Dr. John Montague", "role": "Paranormal investigator leading the expedition"},
+            {"name": "Theodora", "role": "Charming, artistic guest who provides a foil to Eleanor"},
+            {"name": "Luke Sanderson", "role": "Cynical heir to the Hill House estate"}
+        ],
+        "discussion_questions": [
+            "Is Hill House genuinely supernatural, or are the hauntings projections of Eleanor's repressed trauma?",
+            "What does the famous opening and closing line ('whatever walked there, walked alone') reveal about the house's nature?",
+            "How does Shirley Jackson reinvent the classic gothic mansion trope?"
+        ],
+        "read_alikes": ["The Turn of the Screw by Henry James", "Mexican Gothic by Silvia Moreno-Garcia", "We Have Always Lived in the Castle by Shirley Jackson", "House of Leaves by Mark Z. Danielewski"]
     }
 ]
 

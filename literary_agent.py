@@ -40,6 +40,50 @@ Your Personality:
 class LiteraryAgent:
     def __init__(self):
         self.default_api_key = os.environ.get("GEMINI_API_KEY", "")
+        self.discovered_model: Optional[str] = None
+
+    def _discover_model(self, api_key: str) -> List[str]:
+        """
+        Dynamically query Google's ModelService to find models that support generateContent
+        for this exact API key and project tier.
+        """
+        if self.discovered_model:
+            return [self.discovered_model]
+
+        discovered = []
+        for version in ["v1beta", "v1"]:
+            try:
+                list_url = f"https://generativelanguage.googleapis.com/{version}/models?key={api_key}"
+                resp = requests.get(list_url, timeout=5)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    models = data.get("models", [])
+                    # Filter for models supporting generateContent
+                    gen_models = [
+                        f"{version}/{m['name']}"
+                        for m in models
+                        if "generateContent" in m.get("supportedGenerationMethods", [])
+                    ]
+                    # Prioritize Flash models, then Pro, then others
+                    flash_models = [m for m in gen_models if "flash" in m.lower()]
+                    other_models = [m for m in gen_models if "flash" not in m.lower()]
+                    discovered.extend(flash_models + other_models)
+                    if discovered:
+                        break
+            except Exception:
+                pass
+
+        # Static fallback list in case ListModels is blocked
+        static_fallbacks = [
+            "v1beta/models/gemini-2.0-flash",
+            "v1beta/models/gemini-2.5-flash",
+            "v1beta/models/gemini-1.5-flash-latest",
+            "v1beta/models/gemini-1.5-pro",
+            "v1/models/gemini-1.5-flash",
+            "v1beta/models/gemini-pro"
+        ]
+        
+        return discovered if discovered else static_fallbacks
 
     def chat(
         self,
@@ -84,13 +128,8 @@ class LiteraryAgent:
         spoiler_shield: bool,
         user_preferences: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
-        """Call Gemini REST API across available models with automatic fallback."""
-        candidate_models = [
-            "gemini-3.8-flash",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash"
-        ]
+        """Call Gemini REST API with dynamic model discovery and fallback."""
+        candidate_paths = self._discover_model(api_key)
         
         # Build contents from history
         contents = []
@@ -132,8 +171,14 @@ class LiteraryAgent:
         headers = {"Content-Type": "application/json"}
         last_error = None
 
-        for model in candidate_models:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        for path in candidate_paths:
+            # path is formatted as: "{version}/{name}" e.g. "v1beta/models/gemini-2.0-flash"
+            if path.startswith("http"):
+                url = f"{path}:generateContent?key={api_key}"
+            else:
+                clean_path = path.lstrip("/")
+                url = f"https://generativelanguage.googleapis.com/{clean_path}:generateContent?key={api_key}"
+
             try:
                 resp = requests.post(url, headers=headers, json=payload, timeout=12)
                 if resp.status_code == 200:
@@ -141,6 +186,10 @@ class LiteraryAgent:
                     candidates = data.get("candidates", [])
                     if candidates:
                         raw_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        
+                        # Cache the working model path for future calls
+                        self.discovered_model = path
+                        model_name = path.split("/")[-1]
                         
                         # Extract embedded book JSON if present
                         book_cards = []
@@ -172,10 +221,9 @@ class LiteraryAgent:
                             "text": clean_text,
                             "book_cards": book_cards,
                             "engine": "gemini-cloud",
-                            "model": model
+                            "model": model_name
                         }
                 elif resp.status_code in [404, 400]:
-                    # Model not available for this key/tier, continue to next candidate model
                     last_error = f"Gemini API returned status {resp.status_code}: {resp.text}"
                     continue
                 else:
@@ -184,7 +232,7 @@ class LiteraryAgent:
                 last_error = str(e)
                 continue
 
-        raise RuntimeError(last_error or "Failed to connect to any Gemini model candidate.")
+        raise RuntimeError(last_error or "Failed to connect to an active Gemini model.")
 
     def _offline_reasoning(
         self,
@@ -231,6 +279,7 @@ class LiteraryAgent:
             "sci-fi": "Science Fiction", "science fiction": "Science Fiction", "space": "Science Fiction",
             "fantasy": "Fantasy", "magic": "Fantasy",
             "mystery": "Mystery & Thriller", "thriller": "Mystery & Thriller", "crime": "Mystery & Thriller", "detective": "Mystery & Thriller",
+            "horror": "Horror", "gothic": "Horror", "spooky": "Horror", "creepy": "Horror",
             "romance": "Romance", "love": "Romance", "dating": "Romance",
             "classic": "Classics", "classics": "Classics", "literature": "Classics",
             "dystopian": "Dystopian", "apocalyptic": "Dystopian",
@@ -239,6 +288,7 @@ class LiteraryAgent:
         
         mood_keywords = {
             "cozy": "charming", "comfort": "heartwarming", "dark": "dark", "grim": "dark",
+            "scary": "terrifying", "creepy": "chilling", "spooky": "chilling", "terrifying": "terrifying",
             "funny": "humorous", "witty": "witty", "tense": "tense", "fast-paced": "suspenseful",
             "mind-bending": "philosophical", "deep": "philosophical", "emotional": "emotional"
         }
