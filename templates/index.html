@@ -117,6 +117,15 @@
                 </div>
 
                 <div class="topbar-right">
+                    <!-- User Account Badge -->
+                    <div class="user-account-badge" id="userBadge" title="Active Reader Profile">
+                        <div class="user-avatar" id="userAvatarText">{{ user_name[0] if user_name else 'R' }}</div>
+                        <span class="user-name" id="userNameText">{{ user_name if user_name else 'Reader' }}</span>
+                        <a href="/logout" class="logout-icon-btn" id="logoutBtn" title="Sign Out">
+                            <i data-lucide="log-out" style="width: 15px; height: 15px;"></i>
+                        </a>
+                    </div>
+
                     <!-- Spoiler Shield Toggle -->
                     <div class="toggle-container" title="When enabled, major plot twists and endings are hidden behind clickable spoiler warnings">
                         <label class="switch">

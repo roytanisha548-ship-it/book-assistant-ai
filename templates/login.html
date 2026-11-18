@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | PageSage AI Book Assistant</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="auth-page-body">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <!-- Brand Header -->
+            <div class="auth-header">
+                <div class="brand-icon auth-brand-icon">
+                    <i data-lucide="book-open-check"></i>
+                </div>
+                <h1 class="auth-title">PageSage</h1>
+                <p class="auth-subtitle">Enter the Literary Sanctuary</p>
+            </div>
+
+            <!-- Demo Account Fast-Track Banner -->
+            <div class="demo-account-box" id="demoBanner">
+                <div class="demo-info">
+                    <span class="demo-badge">QUICK DEMO</span>
+                    <span class="demo-text">demo@pagesage.com • pagesage123</span>
+                </div>
+                <button type="button" class="demo-fill-btn" id="fillDemoBtn">
+                    <i data-lucide="sparkles" class="icon-sm"></i> Auto-Fill
+                </button>
+            </div>
+
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" id="tabLogin" data-target="loginForm">
+                    <i data-lucide="log-in" class="icon-sm"></i> Sign In
+                </button>
+                <button type="button" class="auth-tab" id="tabRegister" data-target="registerForm">
+                    <i data-lucide="user-plus" class="icon-sm"></i> Create Account
+                </button>
+            </div>
+
+            <!-- Alert Notification -->
+            <div class="auth-alert" id="authAlert" style="display: none;"></div>
+
+            <!-- Login Form -->
+            <form class="auth-form" id="loginForm">
+                <div class="auth-input-group">
+                    <label for="loginEmail">Email Address</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="mail" class="input-icon"></i>
+                        <input type="email" id="loginEmail" placeholder="your.name@example.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="toggle-password-btn" id="toggleLoginPassword">
+                            <i data-lucide="eye" id="loginEyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
+                    <span>Sign In to PageSage</span>
+                    <i data-lucide="arrow-right" class="icon-sm"></i>
+                </button>
+            </form>
+
+            <!-- Register Form (Initially Hidden) -->
+            <form class="auth-form" id="registerForm" style="display: none;">
+                <div class="auth-input-group">
+                    <label for="regName">Full Name</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="user" class="input-icon"></i>
+                        <input type="text" id="regName" placeholder="e.g. Elizabeth Bennet" required autocomplete="name">
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="regEmail">Email Address</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="mail" class="input-icon"></i>
+                        <input type="email" id="regEmail" placeholder="your.name@example.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="regPassword">Password (6+ characters)</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="regPassword" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="toggle-password-btn" id="toggleRegPassword">
+                            <i data-lucide="eye" id="regEyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn" id="regSubmitBtn">
+                    <span>Create Your Library Account</span>
+                    <i data-lucide="check" class="icon-sm"></i>
+                </button>
+            </form>
+
+            <!-- Guest Mode Bypass -->
+            <div class="auth-footer">
+                <span class="auth-footer-text">Want to explore without an account?</span>
+                <button type="button" class="guest-btn" id="guestBtn">
+                    <i data-lucide="compass" class="icon-sm"></i> Continue as Guest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const authAlert = document.getElementById('authAlert');
+            
+            const fillDemoBtn = document.getElementById('fillDemoBtn');
+            const guestBtn = document.getElementById('guestBtn');
+            const loginEmail = document.getElementById('loginEmail');
+            const loginPassword = document.getElementById('loginPassword');
+
+            // Tab Switching
+            tabLogin.addEventListener('click', () => {
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                loginForm.style.display = 'flex';
+                registerForm.style.display = 'none';
+                hideAlert();
+            });
+
+            tabRegister.addEventListener('click', () => {
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+                registerForm.style.display = 'flex';
+                loginForm.style.display = 'none';
+                hideAlert();
+            });
+
+            // Password Visibilities
+            setupPasswordToggle('toggleLoginPassword', 'loginPassword', 'loginEyeIcon');
+            setupPasswordToggle('toggleRegPassword', 'regPassword', 'regEyeIcon');
+
+            function setupPasswordToggle(btnId, inputId, iconId) {
+                const btn = document.getElementById(btnId);
+                const input = document.getElementById(inputId);
+                const icon = document.getElementById(iconId);
+                btn.addEventListener('click', () => {
+                    const isPwd = input.type === 'password';
+                    input.type = isPwd ? 'text' : 'password';
+                    icon.setAttribute('data-lucide', isPwd ? 'eye-off' : 'eye');
+                    if (window.lucide) lucide.createIcons();
+                });
+            }
+
+            // Auto-fill Demo
+            fillDemoBtn.addEventListener('click', () => {
+                tabLogin.click();
+                loginEmail.value = 'demo@pagesage.com';
+                loginPassword.value = 'pagesage123';
+                showAlert('Demo credentials filled! Tap "Sign In" to enter.', 'info');
+            });
+
+            // Login Submit
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = loginEmail.value.trim();
+                const password = loginPassword.value.trim();
+                
+                const submitBtn = document.getElementById('loginSubmitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>Verifying credentials...</span>';
+
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        showAlert('Welcome back! Entering the library...', 'success');
+                        setTimeout(() => window.location.href = '/', 600);
+                    } else {
+                        showAlert(data.error || 'Invalid email or password.', 'error');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<span>Sign In to PageSage</span> <i data-lucide="arrow-right" class="icon-sm"></i>';
+                        if (window.lucide) lucide.createIcons();
+                    }
+                } catch (err) {
+                    showAlert('Network error: ' + err.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Sign In to PageSage</span> <i data-lucide="arrow-right" class="icon-sm"></i>';
+                    if (window.lucide) lucide.createIcons();
+                }
+            });
+
+            // Register Submit
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('regName').value.trim();
+                const email = document.getElementById('regEmail').value.trim();
+                const password = document.getElementById('regPassword').value.trim();
+
+                const submitBtn = document.getElementById('regSubmitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>Creating account...</span>';
+
+                try {
+                    const res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, password })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        showAlert('Account created successfully! Entering the library...', 'success');
+                        setTimeout(() => window.location.href = '/', 600);
+                    } else {
+                        showAlert(data.error || 'Failed to create account.', 'error');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<span>Create Your Library Account</span> <i data-lucide="check" class="icon-sm"></i>';
+                        if (window.lucide) lucide.createIcons();
+                    }
+                } catch (err) {
+                    showAlert('Network error: ' + err.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Create Your Library Account</span> <i data-lucide="check" class="icon-sm"></i>';
+                    if (window.lucide) lucide.createIcons();
+                }
+            });
+
+            // Continue as Guest
+            guestBtn.addEventListener('click', async () => {
+                try {
+                    const res = await fetch('/api/auth/guest', { method: 'POST' });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.href = '/';
+                    }
+                } catch (err) {
+                    window.location.href = '/';
+                }
+            });
+
+            function showAlert(msg, type) {
+                authAlert.textContent = msg;
+                authAlert.className = `auth-alert ${type}`;
+                authAlert.style.display = 'block';
+            }
+
+            function hideAlert() {
+                authAlert.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

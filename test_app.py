@@ -1,9 +1,11 @@
 """
 Unit and Integration Tests for PageSage AI Book Assistant.
+Covers literary service, agents, authentication, and endpoints.
 """
 
 import unittest
 import json
+import time
 from app import app
 from book_service import (
     search_local_books,
@@ -12,6 +14,7 @@ from book_service import (
     CURATED_BOOKS
 )
 from literary_agent import LiteraryAgent
+from auth_service import register_user, authenticate_user, get_user_by_id
 
 class TestBookService(unittest.TestCase):
     def test_curated_books_not_empty(self):
@@ -82,14 +85,77 @@ class TestLiteraryAgent(unittest.TestCase):
         self.assertIn("Recommendations", res["text"])
         self.assertGreater(len(res["book_cards"]), 0)
 
+class TestAuthentication(unittest.TestCase):
+    def test_demo_user_authentication(self):
+        user, err = authenticate_user("demo@pagesage.com", "pagesage123")
+        self.assertIsNone(err)
+        self.assertIsNotNone(user)
+        self.assertEqual(user["email"], "demo@pagesage.com")
+
+    def test_invalid_password(self):
+        user, err = authenticate_user("demo@pagesage.com", "wrongpassword")
+        self.assertIsNone(user)
+        self.assertIn("Invalid", err)
+
+    def test_new_user_registration(self):
+        unique_email = f"reader_{int(time.time())}@example.com"
+        user, err = register_user("Jane Austen Fan", unique_email, "securepass123")
+        self.assertIsNone(err)
+        self.assertIsNotNone(user)
+        self.assertEqual(user["name"], "Jane Austen Fan")
+
+        # Duplicate registration should fail
+        dup_user, dup_err = register_user("Jane Clone", unique_email, "anotherpass")
+        self.assertIsNone(dup_user)
+        self.assertIn("already exists", dup_err)
+
 class TestFlaskEndpoints(unittest.TestCase):
     def setUp(self):
+        app.config["TESTING"] = True
         self.client = app.test_client()
 
-    def test_index_route(self):
+    def test_unauthenticated_index_redirects(self):
         resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/login", resp.headers["Location"])
+
+    def test_login_page_renders(self):
+        resp = self.client.get("/login")
         self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"Sign In", resp.data)
         self.assertIn(b"PageSage", resp.data)
+
+    def test_guest_login_flow(self):
+        resp = self.client.post("/api/auth/guest")
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertTrue(data["success"])
+        self.assertEqual(data["user"]["name"], "Guest Bibliophile")
+
+        # Now / should succeed
+        index_resp = self.client.get("/")
+        self.assertEqual(index_resp.status_code, 200)
+        self.assertIn(b"Guest Bibliophile", index_resp.data)
+
+    def test_demo_login_flow(self):
+        payload = {"email": "demo@pagesage.com", "password": "pagesage123"}
+        resp = self.client.post(
+            "/api/auth/login",
+            data=json.dumps(payload),
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertTrue(data["success"])
+
+        # Check me endpoint
+        me_resp = self.client.get("/api/auth/me")
+        me_data = json.loads(me_resp.data)
+        self.assertTrue(me_data["authenticated"])
+
+        # Logout
+        logout_resp = self.client.get("/logout")
+        self.assertEqual(logout_resp.status_code, 302)
 
     def test_status_route(self):
         resp = self.client.get("/api/status")
